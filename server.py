@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
+import os
 import sqlite3
 import logging
 
@@ -8,6 +9,11 @@ app.secret_key = 'supersecretkey'
 
 # Configurar logging
 logging.basicConfig(filename='log.txt', level=logging.INFO)
+
+# Diretório para arquivos
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+FILES_DIR = os.path.join(BASE_DIR, 'files')
+os.makedirs(FILES_DIR, exist_ok=True)
 
 # Conectar ao banco de dados
 def get_db_connection():
@@ -81,7 +87,62 @@ def protected():
         flash('You need to be logged in to access this page.', 'warning')
         return redirect(url_for('login'))
 
-    return render_template('protected.html')
+    items = []
+    for root, dirs, files in os.walk(FILES_DIR):
+        for d in dirs:
+            items.append(os.path.relpath(os.path.join(root, d), FILES_DIR))
+        for f in files:
+            items.append(os.path.relpath(os.path.join(root, f), FILES_DIR))
+
+    return render_template('protected.html', items=items)
+
+@app.route('/add_folder', methods=['POST'])
+def add_folder():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    folder_name = request.form['folder_name']
+    if folder_name:
+        os.makedirs(os.path.join(FILES_DIR, folder_name), exist_ok=True)
+        flash('Folder created successfully!', 'success')
+        logging.info(f'Folder "{folder_name}" created.')
+
+    return redirect(url_for('protected'))
+
+@app.route('/edit_file/<path:filename>', methods=['GET', 'POST'])
+def edit_file(filename):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    file_path = os.path.join(FILES_DIR, filename)
+    if request.method == 'POST':
+        content = request.form['content']
+        with open(file_path, 'w') as f:
+            f.write(content)
+        flash('File updated successfully!', 'success')
+        logging.info(f'File "{filename}" edited.')
+        return redirect(url_for('protected'))
+
+    with open(file_path, 'r') as f:
+        content = f.read()
+
+    return render_template('edit_file.html', filename=filename, content=content)
+
+@app.route('/delete_item/<path:filename>')
+def delete_item(filename):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    file_path = os.path.join(FILES_DIR, filename)
+    if os.path.isdir(file_path):
+        os.rmdir(file_path)
+    else:
+        os.remove(file_path)
+
+    flash('Item deleted successfully!', 'success')
+    logging.info(f'Item "{filename}" deleted.')
+
+    return redirect(url_for('protected'))
 
 @app.route('/logout')
 def logout():
