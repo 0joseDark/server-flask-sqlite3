@@ -11,12 +11,14 @@
     <form method="POST">
         <label for="username">Username:</label>
         <input type="text" id="username" name="username" required>
+        <br>
         <label for="password">Password:</label>
         <input type="password" id="password" name="password" required>
+        <br>
         <button type="submit">Login</button>
     </form>
     <nav>
-        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('index') }}">Back to Home</a>
     </nav>
 </body>
 </html>

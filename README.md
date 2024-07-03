@@ -12,14 +12,14 @@ project/
 │   ├── index.html
 │   ├── register.html
 │   ├── login.html
-│   └── protected.html
+│   ├── protected.html
+│   └── edit_file.html
 │
-├── files/    # Novo diretório para armazenar os arquivos e pastas gerenciados
+├── user-files/             # Diretório criado para armazenar os arquivos e pastas gerenciados
 ├── users.db
 ├── log.txt
 ├── server.py
 └── README.md
-
 # Instalação e Execução
 
 1. **Crie e ative um ambiente virtual:**

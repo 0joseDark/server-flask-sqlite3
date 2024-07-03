@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <title>Home</title>
+    <title>Index</title>
 </head>
 <body>
-    <h1>Welcome to Our Site</h1>
+    <h1>Welcome to the File Manager</h1>
     <nav>
-        <a href="{{ url_for('register') }}">Register</a>
+        <a href="{{ url_for('register') }}">Register</a> |
         <a href="{{ url_for('login') }}">Login</a>
     </nav>
 </body>

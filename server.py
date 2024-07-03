@@ -12,7 +12,7 @@ logging.basicConfig(filename='log.txt', level=logging.INFO)
 
 # Diretório para arquivos
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-FILES_DIR = os.path.join(BASE_DIR, 'files')
+FILES_DIR = os.path.join(BASE_DIR, 'user-files')
 os.makedirs(FILES_DIR, exist_ok=True)
 
 # Conectar ao banco de dados
@@ -103,9 +103,13 @@ def add_folder():
 
     folder_name = request.form['folder_name']
     if folder_name:
-        os.makedirs(os.path.join(FILES_DIR, folder_name), exist_ok=True)
-        flash('Folder created successfully!', 'success')
-        logging.info(f'Folder "{folder_name}" created.')
+        new_folder_path = os.path.join(FILES_DIR, folder_name)
+        if not os.path.exists(new_folder_path):
+            os.makedirs(new_folder_path)
+            flash('Folder created successfully!', 'success')
+            logging.info(f'Folder "{folder_name}" created.')
+        else:
+            flash('Folder already exists.', 'warning')
 
     return redirect(url_for('protected'))
 
@@ -115,12 +119,21 @@ def edit_file(filename):
         return redirect(url_for('login'))
 
     file_path = os.path.join(FILES_DIR, filename)
+    
+    if os.path.isdir(file_path):
+        flash('Cannot edit a folder. Please select a file.', 'warning')
+        return redirect(url_for('protected'))
+    
     if request.method == 'POST':
         content = request.form['content']
         with open(file_path, 'w') as f:
             f.write(content)
         flash('File updated successfully!', 'success')
         logging.info(f'File "{filename}" edited.')
+        return redirect(url_for('protected'))
+
+    if not os.path.isfile(file_path):
+        flash('File does not exist.', 'danger')
         return redirect(url_for('protected'))
 
     with open(file_path, 'r') as f:
@@ -134,13 +147,21 @@ def delete_item(filename):
         return redirect(url_for('login'))
 
     file_path = os.path.join(FILES_DIR, filename)
-    if os.path.isdir(file_path):
-        os.rmdir(file_path)
-    else:
-        os.remove(file_path)
+    
+    if not os.path.exists(file_path):
+        flash('Item does not exist.', 'danger')
+        return redirect(url_for('protected'))
 
-    flash('Item deleted successfully!', 'success')
-    logging.info(f'Item "{filename}" deleted.')
+    try:
+        if os.path.isdir(file_path):
+            os.rmdir(file_path)
+        else:
+            os.remove(file_path)
+        flash('Item deleted successfully!', 'success')
+        logging.info(f'Item "{filename}" deleted.')
+    except OSError as e:
+        flash(f'Error deleting item: {e}', 'danger')
+        logging.error(f'Error deleting item "{filename}": {e}')
 
     return redirect(url_for('protected'))
 
